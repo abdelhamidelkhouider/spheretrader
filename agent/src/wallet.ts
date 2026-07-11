@@ -51,8 +51,10 @@ export class WalletManager {
       });
 
       // Step 3: Init Sphere with mnemonic and modules
+      // network MUST be passed directly — SDK needs it for TokenRegistry
       const { sphere, created, generatedMnemonic } = await Sphere.init({
         ...providers,
+        network: 'testnet2',
         mnemonic: this.config.mnemonic,
         autoGenerate: false,
         market: true,   // Enable MarketModule

@@ -143,7 +143,7 @@ export class Trader {
       );
 
       // 2. Post/refresh intents on the market
-      if (this.treasury.canTrade()) {
+      if (this.treasury.isHealthy()) {
         await this.marketScanner.postIntents();
       } else {
         logger.log('system', '⏸ Budget limit reached — skipping intent posting');
