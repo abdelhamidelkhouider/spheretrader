@@ -1,0 +1,16 @@
+{
+  "name": "spheretrader",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Autonomous Market Maker on Unicity Sphere — an AI agent that posts intents, negotiates trades via DM, and settles payments autonomously",
+  "workspaces": ["agent", "dashboard"],
+  "scripts": {
+    "agent": "cd agent && npm run start",
+    "agent:dev": "cd agent && npm run dev",
+    "dashboard": "cd dashboard && npm run dev",
+    "dashboard:build": "cd dashboard && npm run build",
+    "install:all": "cd agent && npm install && cd ../dashboard && npm install"
+  },
+  "keywords": ["unicity", "sphere", "autonomous", "agent", "market-maker", "trading"],
+  "license": "MIT"
+}
