@@ -1,55 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import ParticleBackground from './components/ParticleBackground';
 import Header from './components/Header';
 import StatsCards, { StatCardData } from './components/StatsCards';
 import LiveFeed from './components/LiveFeed';
 import MarketBrowser from './components/MarketBrowser';
 import TradeHistory from './components/TradeHistory';
 import AgentConfig from './components/AgentConfig';
+import { apiService } from './api';
 
-function formatUptime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
+function formatUptime(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
   return `${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
 }
 
 const App: React.FC = () => {
-  const [uptime, setUptime] = useState(7342); // ~2 hours of uptime
+  const [, setTick] = useState(0);
+  const refresh = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setUptime((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    apiService.start();
+    const unsub = apiService.subscribe(refresh);
+    const uptimeTimer = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => {
+      unsub();
+      clearInterval(uptimeTimer);
+      apiService.stop();
+    };
+  }, [refresh]);
 
-  const stats: StatCardData[] = [
+  const stats = apiService.stats;
+  const connected = apiService.connected;
+
+  const statCards: StatCardData[] = [
     {
-      icon: '📈',
-      value: '48',
+      icon: '⚡',
+      value: String(stats?.totalTrades ?? 0),
       label: 'Total Trades',
-      trend: '+12 today',
-      trendDir: 'up',
+      trend: stats ? `+${stats.completedTrades} settled` : 'initializing...',
+      trendDir: (stats?.completedTrades ?? 0) > 0 ? 'up' : undefined,
       accent: 'cyan',
     },
     {
-      icon: '💰',
-      value: '2,347.50',
-      label: 'Volume (USDU)',
-      trend: '+18.4%',
-      trendDir: 'up',
+      icon: '◈',
+      value: stats?.totalVolume ?? '0.00',
+      label: 'Volume (UCT)',
+      trend: stats ? `${stats.loopCount} scan loops` : 'scanning...',
+      trendDir: parseFloat(stats?.totalVolume ?? '0') > 0 ? 'up' : undefined,
       accent: 'emerald',
     },
     {
-      icon: '📡',
-      value: '6',
+      icon: '◎',
+      value: String(stats?.activeIntents ?? 0),
       label: 'Active Intents',
-      trend: '3 buy · 3 sell',
+      trend: stats ? `${stats.activeNegotiations} negotiating` : 'posting...',
       accent: 'purple',
     },
     {
-      icon: '⏱️',
-      value: formatUptime(uptime),
+      icon: '⏣',
+      value: formatUptime(stats?.uptime ?? 0),
       label: 'Agent Uptime',
       accent: 'amber',
     },
@@ -57,35 +68,42 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Header agentOnline={true} />
+      {/* Animated particle network background */}
+      <ParticleBackground />
+
+      {/* Subtle scan line overlay */}
+      <div className="scanline-overlay" />
+
+      <Header agentOnline={true} connected={connected} />
 
       <main className="dashboard">
-        <StatsCards stats={stats} />
+        <StatsCards stats={statCards} />
 
         <div className="main-grid">
-          {/* Left Column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <LiveFeed />
+            <LiveFeed activities={apiService.activities} />
             <MarketBrowser />
           </div>
 
-          {/* Right Column */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <TradeHistory />
-            <AgentConfig />
+            <AgentConfig connected={connected} />
           </div>
         </div>
 
         <footer className="footer">
-          <strong className="gradient-text">SphereTrader</strong> — Autonomous Market Maker
-          &nbsp;·&nbsp; Built for the{' '}
+          <span className="gradient-text">SPHERETRADER</span>
+          &nbsp;&nbsp;·&nbsp;&nbsp; Autonomous Market Maker
+          &nbsp;&nbsp;·&nbsp;&nbsp;
           <a href="https://unicity.network" target="_blank" rel="noopener noreferrer">
-            Unicity Sphere Hackathon
+            Unicity Sphere
           </a>
-          &nbsp;·&nbsp; Powered by{' '}
-          <a href="https://alphabill.org" target="_blank" rel="noopener noreferrer">
-            Alphabill
-          </a>
+          &nbsp;&nbsp;·&nbsp;&nbsp;
+          {connected ? (
+            <span style={{ color: 'var(--emerald)' }}>● API CONNECTED</span>
+          ) : (
+            <span style={{ color: 'var(--amber)' }}>◌ SIMULATION MODE</span>
+          )}
         </footer>
       </main>
     </>

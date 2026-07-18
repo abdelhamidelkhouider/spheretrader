@@ -1,70 +1,98 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import type { Activity } from '../api';
 
-type FeedType = 'intent' | 'dm' | 'trade' | 'payment' | 'error' | 'system';
-
-interface FeedEntry {
-  id: number;
-  type: FeedType;
-  text: string;
-  time: string;
-}
-
-const ICONS: Record<FeedType, string> = {
-  intent:  '📡',
-  dm:      '💬',
-  trade:   '🤝',
-  payment: '💸',
-  error:   '⚠️',
-  system:  '⚙️',
+const TYPE_CONFIG: Record<string, { icon: string; color: string }> = {
+  system: { icon: '⚙', color: '#5a6088' },
+  intent_posted: { icon: '◈', color: '#00e5ff' },
+  dm_received: { icon: '◄', color: '#22d3ee' },
+  dm_sent: { icon: '►', color: '#c084fc' },
+  trade_started: { icon: '⬡', color: '#ffab00' },
+  trade_settled: { icon: '✦', color: '#00e676' },
+  payment_sent: { icon: '↗', color: '#ffab00' },
+  payment_received: { icon: '↙', color: '#00e676' },
+  balance_update: { icon: '◇', color: '#00e5ff' },
+  nametag_registered: { icon: '⊕', color: '#c084fc' },
+  error: { icon: '✕', color: '#ff1744' },
 };
 
-const MOCK_FEED: FeedEntry[] = [
-  { id: 1,  type: 'system',  text: 'Agent started — SphereTrader v1.0.0 initialized', time: '04:17:01' },
-  { id: 2,  type: 'system',  text: 'Connected to Unicity Sphere testnet-v2', time: '04:17:02' },
-  { id: 3,  type: 'intent',  text: 'Posted buy intent: <strong>100 UCT</strong> at price 0.95 USDU', time: '04:17:05' },
-  { id: 4,  type: 'intent',  text: 'Posted sell intent: <strong>50 UCT</strong> at price 1.05 USDU', time: '04:17:06' },
-  { id: 5,  type: 'dm',      text: 'Received DM from <strong>@trader42</strong>: "Interested in your 100 UCT buy offer"', time: '04:18:12' },
-  { id: 6,  type: 'dm',      text: 'Sent counter-offer to <strong>@trader42</strong>: 100 UCT at 0.96 USDU', time: '04:18:15' },
-  { id: 7,  type: 'trade',   text: 'Negotiation complete with <strong>@trader42</strong> — settling trade #47', time: '04:19:30' },
-  { id: 8,  type: 'payment', text: 'Payment sent: <strong>96 USDU</strong> → @trader42 (trade #47)', time: '04:19:31' },
-  { id: 9,  type: 'trade',   text: 'Trade <strong>#47</strong> settled successfully ✓ — received 100 UCT', time: '04:19:34' },
-  { id: 10, type: 'intent',  text: 'Refreshed sell intent: <strong>150 UCT</strong> at 1.04 USDU', time: '04:20:01' },
-  { id: 11, type: 'dm',      text: 'Received DM from <strong>@alphadealer</strong>: "Can you do 200 UCT at 0.97?"', time: '04:22:44' },
-  { id: 12, type: 'dm',      text: 'Auto-rejected <strong>@alphadealer</strong> — price below minimum threshold', time: '04:22:45' },
-  { id: 13, type: 'intent',  text: 'Market scan complete — found <strong>3 matching</strong> counter-intents', time: '04:25:10' },
-  { id: 14, type: 'payment', text: 'Received payment: <strong>52.5 USDU</strong> from @node_runner (trade #48)', time: '04:26:02' },
-  { id: 15, type: 'trade',   text: 'Trade <strong>#48</strong> settled successfully ✓ — sold 50 UCT', time: '04:26:05' },
-];
+interface Props {
+  activities: Activity[];
+}
 
-const LiveFeed: React.FC = () => {
+const LiveFeed: React.FC<Props> = ({ activities }) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const prevCount = useRef(0);
+
+  useEffect(() => {
+    if (activities.length > prevCount.current && scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+    prevCount.current = activities.length;
+  }, [activities.length]);
+
+  const formatTime = (ts: string) => {
+    const d = new Date(ts);
+    return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
   return (
-    <div className="glass-card panel animate-in" style={{ animationDelay: '0.1s' }}>
-      <div className="panel-header">
-        <h3 className="panel-title">
-          <span style={{ color: 'var(--emerald)' }}>●</span> Live Activity Feed
-        </h3>
-        <span className="badge badge-online" style={{ fontSize: '0.65rem' }}>
-          <span className="pulse-dot" />
-          LIVE
-        </span>
+    <div className="card" style={{ minHeight: 400 }}>
+      <div className="card-header">
+        <h2 className="card-title">◉ LIVE FEED</h2>
+        <span className="badge-live badge">● LIVE</span>
       </div>
-      <div className="panel-body">
-        <div className="feed-list">
-          {MOCK_FEED.map((entry) => (
-            <div key={entry.id} className="feed-item">
-              <div className={`feed-icon ${entry.type}`}>
-                {ICONS[entry.type]}
+      <div ref={scrollRef} className="feed-scroll">
+        {activities.length === 0 ? (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
+            {'>'} AWAITING AGENT TELEMETRY...
+          </div>
+        ) : (
+          activities.map((act, i) => {
+            const cfg = TYPE_CONFIG[act.type] || { icon: '●', color: '#5a6088' };
+            return (
+              <div
+                key={act.id}
+                className={`feed-item ${i === 0 ? 'newest' : ''}`}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <span style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 14,
+                    color: cfg.color,
+                    textShadow: `0 0 8px ${cfg.color}40`,
+                    flexShrink: 0,
+                    marginTop: 1,
+                    width: 16,
+                    textAlign: 'center',
+                  }}>
+                    {cfg.icon}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 12,
+                      color: cfg.color,
+                      lineHeight: 1.5,
+                      wordBreak: 'break-word',
+                      textShadow: act.type === 'trade_settled' ? `0 0 10px ${cfg.color}30` : undefined,
+                    }}>
+                      {act.message}
+                    </div>
+                    <div style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: 10,
+                      color: 'var(--text-muted)',
+                      marginTop: 4,
+                      opacity: 0.5,
+                    }}>
+                      {formatTime(act.timestamp)}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="feed-content">
-                <div
-                  className="feed-text"
-                  dangerouslySetInnerHTML={{ __html: entry.text }}
-                />
-                <div className="feed-time">{entry.time} UTC</div>
-              </div>
-            </div>
-          ))}
-        </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

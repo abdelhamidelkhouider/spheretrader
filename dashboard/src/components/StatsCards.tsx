@@ -1,42 +1,62 @@
-import React from 'react';
+import React, { useRef, useCallback } from 'react';
 
-interface StatCardData {
+export interface StatCardData {
   icon: string;
   value: string;
   label: string;
   trend?: string;
   trendDir?: 'up' | 'down';
-  accent: 'cyan' | 'purple' | 'emerald' | 'amber';
+  accent: 'cyan' | 'emerald' | 'purple' | 'amber';
 }
 
-interface StatsCardsProps {
+interface Props {
   stats: StatCardData[];
 }
 
-const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
+const StatCard: React.FC<{ data: StatCardData }> = ({ data }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    cardRef.current.style.transform = `perspective(600px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) translateY(-4px)`;
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (!cardRef.current) return;
+    cardRef.current.style.transform = 'perspective(600px) rotateY(0deg) rotateX(0deg) translateY(0)';
+  }, []);
+
   return (
-    <div className="stats-row animate-in">
-      {stats.map((stat, i) => (
-        <div
-          key={i}
-          className="glass-card stat-card"
-          style={{ animationDelay: `${i * 0.08}s` }}
-        >
-          <div className="stat-card-header">
-            <div className={`stat-icon ${stat.accent}`}>{stat.icon}</div>
-            {stat.trend && (
-              <span className={`stat-trend ${stat.trendDir ?? 'up'}`}>
-                {stat.trendDir === 'down' ? '▼' : '▲'} {stat.trend}
-              </span>
-            )}
-          </div>
-          <div className="stat-value">{stat.value}</div>
-          <div className="stat-label">{stat.label}</div>
-        </div>
-      ))}
+    <div
+      ref={cardRef}
+      className={`stat-card accent-${data.accent}`}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ transition: 'transform 0.15s ease-out, border-color 0.4s, box-shadow 0.4s' }}
+    >
+      <div className="stat-icon">{data.icon}</div>
+      <div className="stat-value" style={{ animation: 'counter-glow 3s ease-in-out infinite' }}>
+        {data.value}
+      </div>
+      <div className="stat-label">{data.label}</div>
+      {data.trend && (
+        <span className={`stat-trend ${data.trendDir === 'up' ? 'up' : 'neutral'}`}>
+          {data.trendDir === 'up' ? '▲ ' : ''}{data.trend}
+        </span>
+      )}
     </div>
   );
 };
 
+const StatsCards: React.FC<Props> = ({ stats }) => (
+  <div className="stats-row">
+    {stats.map((s, i) => (
+      <StatCard key={i} data={s} />
+    ))}
+  </div>
+);
+
 export default StatsCards;
-export type { StatCardData };
