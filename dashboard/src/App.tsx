@@ -5,6 +5,7 @@ import StatsCards, { StatCardData } from './components/StatsCards';
 import LiveFeed from './components/LiveFeed';
 import TradeHistory from './components/TradeHistory';
 import AgentConfig from './components/AgentConfig';
+import MarketBrowser from './components/MarketBrowser';
 import { apiService } from './api';
 
 function formatUptime(ms: number): string {
