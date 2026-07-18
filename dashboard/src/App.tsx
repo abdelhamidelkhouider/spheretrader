@@ -3,7 +3,6 @@ import GlobeVisualization from './components/GlobeVisualization';
 import Header from './components/Header';
 import StatsCards, { StatCardData } from './components/StatsCards';
 import LiveFeed from './components/LiveFeed';
-import MarketBrowser from './components/MarketBrowser';
 import TradeHistory from './components/TradeHistory';
 import AgentConfig from './components/AgentConfig';
 import { apiService } from './api';
@@ -42,62 +41,91 @@ const App: React.FC = () => {
 
   return (
     <>
-      {/* Gradient mesh background */}
-      <div className="gradient-mesh">
-        <div className="orb orb-1" />
-        <div className="orb orb-2" />
-        <div className="orb orb-3" />
-        <div className="orb orb-4" />
-      </div>
-
-      {/* Grid overlay */}
-      <div className="grid-overlay" />
-
       <Header agentOnline={true} connected={connected} />
 
+      {/* ═══ CINEMATIC HERO ═══ */}
+      <section className="hero">
+        {/* Background layers */}
+        <div className="hero-bg">
+          <img
+            src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1920&q=80"
+            alt=""
+            className="hero-bg-img"
+          />
+          <div className="hero-gradient-overlay" />
+          <div className="hero-noise" />
+        </div>
+
+        {/* 3D Globe */}
+        <div className="hero-globe-container">
+          <GlobeVisualization />
+        </div>
+
+        {/* Content */}
+        <div className="hero-inner">
+          <div className="hero-badge">
+            <span className="hero-dot" /> AUTONOMOUS AGENT — LIVE ON TESTNET V2
+          </div>
+          <h1 className="hero-title">
+            SPHERE<br />
+            <span className="hero-title-accent">TRADER</span>
+          </h1>
+          <p className="hero-desc">
+            Autonomous AI market maker — discovers, negotiates, and settles trades
+            on the Unicity Sphere network with zero human intervention.
+          </p>
+          <div className="hero-metrics">
+            <div className="hero-metric">
+              <span className="hero-metric-val">{stats?.totalTrades ?? 0}</span>
+              <span className="hero-metric-label">TRADES</span>
+            </div>
+            <div className="hero-metric-divider" />
+            <div className="hero-metric">
+              <span className="hero-metric-val">{stats?.activeIntents ?? 0}</span>
+              <span className="hero-metric-label">INTENTS</span>
+            </div>
+            <div className="hero-metric-divider" />
+            <div className="hero-metric">
+              <span className="hero-metric-val" style={{ color: 'var(--emerald)' }}>
+                {connected ? 'LIVE' : 'SIM'}
+              </span>
+              <span className="hero-metric-label">STATUS</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ FEATURES STRIP ═══ */}
+      <section className="features-strip">
+        {[
+          { img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&q=80', title: 'Peer-to-Peer DMs', desc: 'Negotiate trades via encrypted direct messaging' },
+          { img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&q=80', title: 'Autonomous Settlement', desc: 'Payments execute automatically on-chain' },
+          { img: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&q=80', title: 'Market Scanning', desc: 'Discovers and matches intents at machine speed' },
+          { img: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&q=80', title: 'SDK Primitives', desc: 'Built on all 6 Sphere SDK modules' },
+        ].map((f, i) => (
+          <div key={i} className="feature-card">
+            <img src={f.img} alt={f.title} className="feature-card-img" />
+            <div className="feature-card-overlay" />
+            <div className="feature-card-content">
+              <h3 className="feature-card-title">{f.title}</h3>
+              <p className="feature-card-desc">{f.desc}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      {/* ═══ DASHBOARD ═══ */}
       <main className="dashboard">
-        {/* Hero Section with 3D Globe */}
-        <section className="hero-section">
-          <div className="hero-content">
-            <div className="hero-label">
-              <span className="dot" />
-              AUTONOMOUS AGENT ACTIVE
-            </div>
-            <h1 className="hero-title">
-              Trading the<br />Machine Economy
-            </h1>
-            <p className="hero-desc">
-              SphereTrader autonomously discovers, negotiates, and settles trades
-              on the Unicity Sphere network — zero human intervention.
-            </p>
-            <div className="hero-stats">
-              <div className="hero-stat-item">
-                <div className="hero-stat-value">{stats?.totalTrades ?? 0}</div>
-                <div className="hero-stat-label">Trades</div>
-              </div>
-              <div className="hero-stat-item">
-                <div className="hero-stat-value">{stats?.activeIntents ?? 0}</div>
-                <div className="hero-stat-label">Intents</div>
-              </div>
-              <div className="hero-stat-item">
-                <div className="hero-stat-value" style={{ color: 'var(--emerald)' }}>
-                  {connected ? 'Live' : 'Sim'}
-                </div>
-                <div className="hero-stat-label">Status</div>
-              </div>
-            </div>
-          </div>
-          <div className="hero-globe">
-            <GlobeVisualization />
-          </div>
-        </section>
+        <div className="section-header">
+          <h2 className="section-title">LIVE DASHBOARD</h2>
+          <div className="section-line" />
+        </div>
 
         <StatsCards stats={statCards} />
 
         <div className="main-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <LiveFeed activities={apiService.activities} />
-            <MarketBrowser />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <TradeHistory />
@@ -110,11 +138,6 @@ const App: React.FC = () => {
           &nbsp;&nbsp;·&nbsp;&nbsp; Autonomous Market Maker
           &nbsp;&nbsp;·&nbsp;&nbsp;
           <a href="https://unicity.network" target="_blank" rel="noopener noreferrer">Unicity Sphere</a>
-          &nbsp;&nbsp;·&nbsp;&nbsp;
-          {connected
-            ? <span style={{ color: 'var(--emerald)' }}>● API CONNECTED</span>
-            : <span style={{ color: 'var(--amber)' }}>◌ SIMULATION MODE</span>
-          }
         </footer>
       </main>
     </>
