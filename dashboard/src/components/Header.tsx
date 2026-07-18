@@ -1,46 +1,46 @@
 import React from 'react';
+import { Zap, Wifi, WifiOff, Globe, Shield } from 'lucide-react';
 
-interface HeaderProps {
+interface Props {
   agentOnline: boolean;
+  connected?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ agentOnline }) => {
-  return (
-    <header className="header">
-      <div className="header-left">
-        <div className="header-logo">
-          <div className="header-logo-icon">⚡</div>
-          <h1 className="header-title">
-            <span className="gradient-text">SphereTrader</span>
-          </h1>
+const Header: React.FC<Props> = ({ agentOnline, connected }) => (
+  <header className="header">
+    <div className="header-left">
+      <div className="logo">
+        <div className="logo-icon">
+          <Zap size={18} />
         </div>
-        <span
-          style={{
-            fontSize: '0.72rem',
-            color: 'var(--text-muted)',
-            fontWeight: 500,
-            letterSpacing: '0.03em',
-          }}
-        >
-          Autonomous Market Maker
-        </span>
+        <span className="logo-text">SphereTrader</span>
       </div>
-
-      <div className="header-right">
-        <span className={`badge ${agentOnline ? 'badge-online' : 'badge-offline'}`}>
-          <span className="pulse-dot" />
-          {agentOnline ? 'Agent Online' : 'Agent Offline'}
+      <span className="header-subtitle">Autonomous Market Maker</span>
+    </div>
+    <div className="header-right">
+      <span className={`badge ${agentOnline ? 'badge-online' : ''}`}>
+        <span style={{
+          width: 7, height: 7, borderRadius: '50%',
+          background: agentOnline ? 'var(--emerald)' : 'var(--red)',
+          boxShadow: agentOnline ? '0 0 8px var(--emerald)' : undefined,
+          animation: agentOnline ? 'pulse 2s infinite' : undefined,
+        }} />
+        {agentOnline ? 'AGENT ONLINE' : 'OFFLINE'}
+      </span>
+      {connected !== undefined && (
+        <span className="badge" style={{
+          background: connected ? 'rgba(0,230,118,0.06)' : 'rgba(255,171,0,0.06)',
+          borderColor: connected ? 'rgba(0,230,118,0.2)' : 'rgba(255,171,0,0.2)',
+          color: connected ? 'var(--emerald)' : 'var(--amber)',
+        }}>
+          {connected ? <Wifi size={11} /> : <WifiOff size={11} />}
+          {connected ? 'API LIVE' : 'SIMULATION'}
         </span>
-        <span className="badge badge-network">◆ Testnet v2</span>
-        <span
-          className="badge badge-info"
-          style={{ fontSize: '0.68rem' }}
-        >
-          Built on Unicity
-        </span>
-      </div>
-    </header>
-  );
-};
+      )}
+      <span className="badge badge-network"><Globe size={11} /> TESTNET V2</span>
+      <span className="badge badge-brand"><Shield size={11} /> UNICITY</span>
+    </div>
+  </header>
+);
 
 export default Header;

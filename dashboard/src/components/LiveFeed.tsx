@@ -1,98 +1,65 @@
 import React, { useEffect, useRef } from 'react';
-import type { Activity } from '../api';
+import { Activity, Settings, FileText, MessageSquare, Send, CheckCircle, DollarSign, Wallet, Tag, AlertCircle } from 'lucide-react';
+import type { Activity as ActivityType } from '../api';
 
-const TYPE_CONFIG: Record<string, { icon: string; color: string }> = {
-  system: { icon: '⚙', color: '#5a6088' },
-  intent_posted: { icon: '◈', color: '#00e5ff' },
-  dm_received: { icon: '◄', color: '#22d3ee' },
-  dm_sent: { icon: '►', color: '#c084fc' },
-  trade_started: { icon: '⬡', color: '#ffab00' },
-  trade_settled: { icon: '✦', color: '#00e676' },
-  payment_sent: { icon: '↗', color: '#ffab00' },
-  payment_received: { icon: '↙', color: '#00e676' },
-  balance_update: { icon: '◇', color: '#00e5ff' },
-  nametag_registered: { icon: '⊕', color: '#c084fc' },
-  error: { icon: '✕', color: '#ff1744' },
+const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
+  system: { icon: <Settings size={14} />, color: '#484d6e' },
+  intent_posted: { icon: <FileText size={14} />, color: '#00e5ff' },
+  dm_received: { icon: <MessageSquare size={14} />, color: '#22d3ee' },
+  dm_sent: { icon: <Send size={14} />, color: '#c084fc' },
+  trade_started: { icon: <Activity size={14} />, color: '#ffab00' },
+  trade_settled: { icon: <CheckCircle size={14} />, color: '#00e676' },
+  payment_sent: { icon: <DollarSign size={14} />, color: '#ffab00' },
+  payment_received: { icon: <Wallet size={14} />, color: '#00e676' },
+  balance_update: { icon: <Wallet size={14} />, color: '#00e5ff' },
+  nametag_registered: { icon: <Tag size={14} />, color: '#c084fc' },
+  error: { icon: <AlertCircle size={14} />, color: '#ff1744' },
 };
 
-interface Props {
-  activities: Activity[];
-}
+interface Props { activities: ActivityType[]; }
 
 const LiveFeed: React.FC<Props> = ({ activities }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevCount = useRef(0);
 
   useEffect(() => {
-    if (activities.length > prevCount.current && scrollRef.current) {
-      scrollRef.current.scrollTop = 0;
-    }
+    if (activities.length > prevCount.current && scrollRef.current) scrollRef.current.scrollTop = 0;
     prevCount.current = activities.length;
   }, [activities.length]);
 
-  const formatTime = (ts: string) => {
-    const d = new Date(ts);
-    return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  };
+  const formatTime = (ts: string) => new Date(ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
     <div className="card" style={{ minHeight: 400 }}>
       <div className="card-header">
-        <h2 className="card-title">◉ LIVE FEED</h2>
-        <span className="badge-live badge">● LIVE</span>
+        <h2 className="card-title"><Activity size={16} /> LIVE FEED</h2>
+        <span className="badge badge-live"><span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ff1744', boxShadow: '0 0 8px #ff1744' }} /> LIVE</span>
       </div>
       <div ref={scrollRef} className="feed-scroll">
         {activities.length === 0 ? (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
-            {'>'} AWAITING AGENT TELEMETRY...
+            Awaiting agent telemetry...
           </div>
-        ) : (
-          activities.map((act, i) => {
-            const cfg = TYPE_CONFIG[act.type] || { icon: '●', color: '#5a6088' };
-            return (
-              <div
-                key={act.id}
-                className={`feed-item ${i === 0 ? 'newest' : ''}`}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 14,
-                    color: cfg.color,
-                    textShadow: `0 0 8px ${cfg.color}40`,
-                    flexShrink: 0,
-                    marginTop: 1,
-                    width: 16,
-                    textAlign: 'center',
-                  }}>
-                    {cfg.icon}
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: 12,
-                      color: cfg.color,
-                      lineHeight: 1.5,
-                      wordBreak: 'break-word',
-                      textShadow: act.type === 'trade_settled' ? `0 0 10px ${cfg.color}30` : undefined,
-                    }}>
-                      {act.message}
-                    </div>
-                    <div style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: 10,
-                      color: 'var(--text-muted)',
-                      marginTop: 4,
-                      opacity: 0.5,
-                    }}>
-                      {formatTime(act.timestamp)}
-                    </div>
+        ) : activities.map((act, i) => {
+          const cfg = TYPE_CONFIG[act.type] || { icon: <Activity size={14} />, color: '#484d6e' };
+          return (
+            <div key={act.id} className={`feed-item ${i === 0 ? 'newest' : ''}`}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <span style={{ color: cfg.color, flexShrink: 0, marginTop: 2, filter: `drop-shadow(0 0 4px ${cfg.color}40)` }}>
+                  {cfg.icon}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, color: cfg.color, lineHeight: 1.5, wordBreak: 'break-word' }}>
+                    {act.message}
+                  </div>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'var(--text-muted)', marginTop: 3, opacity: 0.5 }}>
+                    {formatTime(act.timestamp)}
                   </div>
                 </div>
               </div>
-            );
-          })
-        )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

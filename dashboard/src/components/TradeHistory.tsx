@@ -1,82 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { BarChart3, ArrowUpRight, ArrowDownRight, CheckCircle, Clock, XCircle } from 'lucide-react';
 
-type TradeStatus = 'completed' | 'pending' | 'failed';
-
-interface Trade {
-  id: string;
-  counterparty: string;
-  type: 'Buy' | 'Sell';
-  amount: string;
-  price: string;
-  status: TradeStatus;
-  time: string;
+interface SimTrade {
+  id: string; counterparty: string; side: 'buy' | 'sell';
+  amount: number; price: number; status: 'completed' | 'pending' | 'failed'; time: string;
 }
 
-const STATUS_LABELS: Record<TradeStatus, string> = {
-  completed: '✓ Completed',
-  pending: '⏳ Pending',
-  failed: '✗ Failed',
-};
+const AGENTS = ['@node_runner','@trader42','@mm_node','@whale_buyer','@alpha_bot','@dex_agent','@flash_seller','@escrow_agent','@arb_master','@yield_bot'];
 
-const MOCK_TRADES: Trade[] = [
-  { id: '#0048', counterparty: '@node_runner',   type: 'Sell', amount: '50 UCT',   price: '1.05 USDU', status: 'completed', time: '04:26' },
-  { id: '#0047', counterparty: '@trader42',      type: 'Buy',  amount: '100 UCT',  price: '0.96 USDU', status: 'completed', time: '04:19' },
-  { id: '#0046', counterparty: '@mm_node',       type: 'Buy',  amount: '250 UCT',  price: '0.95 USDU', status: 'completed', time: '03:48' },
-  { id: '#0045', counterparty: '@whale_buyer',   type: 'Sell', amount: '500 UCT',  price: '1.03 USDU', status: 'completed', time: '03:15' },
-  { id: '#0044', counterparty: '@dca_bot',       type: 'Buy',  amount: '100 UCT',  price: '0.97 USDU', status: 'completed', time: '02:30' },
-  { id: '#0043', counterparty: '@flash_seller',  type: 'Buy',  amount: '300 UCT',  price: '1.00 USDU', status: 'completed', time: '01:52' },
-  { id: '#0042', counterparty: '@alphadealer',   type: 'Sell', amount: '75 UCT',   price: '1.04 USDU', status: 'pending',   time: '01:10' },
-  { id: '#0041', counterparty: '@escrow_agent',  type: 'Buy',  amount: '1000 UCT', price: '0.94 USDU', status: 'failed',    time: '00:45' },
-  { id: '#0040', counterparty: '@node_runner',   type: 'Sell', amount: '200 UCT',  price: '1.02 USDU', status: 'completed', time: '00:12' },
-];
+function randomTrade(id: number): SimTrade {
+  return {
+    id: `#${48000 + id}`,
+    counterparty: AGENTS[Math.floor(Math.random() * AGENTS.length)],
+    side: Math.random() > 0.5 ? 'buy' : 'sell',
+    amount: Math.floor(Math.random() * 900 + 50),
+    price: parseFloat((0.9 + Math.random() * 0.2).toFixed(2)),
+    status: Math.random() > 0.85 ? (Math.random() > 0.5 ? 'pending' : 'failed') : 'completed',
+    time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+  };
+}
 
 const TradeHistory: React.FC = () => {
+  const [trades, setTrades] = useState<SimTrade[]>(() => Array.from({ length: 8 }, (_, i) => randomTrade(i)));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTrades(prev => [randomTrade(prev.length + Math.floor(Math.random() * 100)), ...prev.slice(0, 9)]);
+    }, 4000 + Math.random() * 6000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const StatusIcon: React.FC<{ status: string }> = ({ status }) => {
+    if (status === 'completed') return <CheckCircle size={12} />;
+    if (status === 'pending') return <Clock size={12} />;
+    return <XCircle size={12} />;
+  };
+
   return (
-    <div className="glass-card panel animate-in" style={{ animationDelay: '0.3s' }}>
-      <div className="panel-header">
-        <h3 className="panel-title">📊 Trade History</h3>
-        <span className="badge badge-info" style={{ fontSize: '0.65rem' }}>
-          {MOCK_TRADES.length} trades
+    <div className="card">
+      <div className="card-header">
+        <h2 className="card-title"><BarChart3 size={16} /> TRADE HISTORY</h2>
+        <span className="badge" style={{ background: 'rgba(124,77,255,0.08)', borderColor: 'rgba(124,77,255,0.2)', color: 'var(--purple)' }}>
+          {trades.length} TRADES
         </span>
       </div>
-      <div className="panel-body" style={{ padding: 0 }}>
+      <div style={{ overflowX: 'auto', maxHeight: 380 }}>
         <table className="trade-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Counterparty</th>
-              <th>Side</th>
-              <th>Amount</th>
-              <th>Price</th>
-              <th>Status</th>
-              <th>Time</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>ID</th><th>Counterparty</th><th>Side</th>
+            <th style={{ textAlign: 'right' }}>Amount</th><th style={{ textAlign: 'right' }}>Price</th>
+            <th style={{ textAlign: 'center' }}>Status</th><th style={{ textAlign: 'right' }}>Time</th>
+          </tr></thead>
           <tbody>
-            {MOCK_TRADES.map((trade) => (
-              <tr key={trade.id}>
-                <td className="trade-id">{trade.id}</td>
-                <td className="trade-counterparty">{trade.counterparty}</td>
+            {trades.map((t, i) => (
+              <tr key={t.id + i} className={i === 0 ? 'new-row' : ''}>
+                <td style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{t.id}</td>
+                <td style={{ color: 'var(--cyan)', fontWeight: 500 }}>{t.counterparty}</td>
                 <td>
-                  <span
-                    className={`market-type ${trade.type === 'Buy' ? 'buy' : 'sell'}`}
-                    style={{ fontSize: '0.68rem' }}
-                  >
-                    {trade.type}
+                  <span className={`side-badge ${t.side}`}>
+                    {t.side === 'buy' ? <ArrowUpRight size={10} style={{ marginRight: 2 }} /> : <ArrowDownRight size={10} style={{ marginRight: 2 }} />}
+                    {t.side.toUpperCase()}
                   </span>
                 </td>
-                <td className="trade-amount font-mono">{trade.amount}</td>
-                <td className="font-mono" style={{ color: 'var(--text-secondary)' }}>
-                  {trade.price}
-                </td>
-                <td>
-                  <span className={`trade-status ${trade.status}`}>
-                    {STATUS_LABELS[trade.status]}
+                <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}>{t.amount} UCT</td>
+                <td style={{ textAlign: 'right', fontFamily: "'JetBrains Mono', monospace" }}>{t.price} USDU</td>
+                <td style={{ textAlign: 'center' }}>
+                  <span className={`status-badge ${t.status}`}>
+                    <StatusIcon status={t.status} /> {t.status === 'completed' ? 'Done' : t.status === 'pending' ? 'Pending' : 'Failed'}
                   </span>
                 </td>
-                <td className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                  {trade.time}
-                </td>
+                <td style={{ textAlign: 'right', color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: '0.7rem' }}>{t.time}</td>
               </tr>
             ))}
           </tbody>
