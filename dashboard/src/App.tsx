@@ -126,6 +126,7 @@ const App: React.FC = () => {
         <div className="main-grid">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <LiveFeed activities={apiService.activities} />
+            <MarketBrowser />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <TradeHistory />
